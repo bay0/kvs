@@ -39,7 +39,10 @@ func TestGet(t *testing.T) {
 		Name: "Alice",
 		Age:  30,
 	}
-	store.Set("person", value)
+
+	if err := store.Set("person", value); err != nil {
+		t.Errorf("Set returned an error: %v", err)
+	}
 
 	val, err := store.Get("person")
 	if err != nil {
@@ -56,7 +59,10 @@ func TestDelete(t *testing.T) {
 		Name: "Alice",
 		Age:  30,
 	}
-	store.Set("person", value)
+
+	if err := store.Set("person", value); err != nil {
+		t.Errorf("Set returned an error: %v", err)
+	}
 
 	err := store.Delete("person")
 	if err != nil {
@@ -78,7 +84,10 @@ func TestKeys(t *testing.T) {
 		Name: "Alice",
 		Age:  30,
 	}
-	store.Set("person", value)
+
+	if err := store.Set("person", value); err != nil {
+		t.Errorf("Set returned an error: %v", err)
+	}
 
 	keys := store.Keys()
 	if len(keys) != 1 || keys[0] != "person" {
@@ -152,9 +161,17 @@ func TestKeyValueStore_Struct(t *testing.T) {
 	store := kvs.NewKeyValueStore()
 
 	// Add some people to the store
-	store.Set("john", Person{Name: "John Doe", Age: 42})
-	store.Set("jane", Person{Name: "Jane Doe", Age: 36})
-	store.Set("bob", Person{Name: "Bob Smith", Age: 27})
+	if err := store.Set("john", Person{Name: "John Doe", Age: 42}); err != nil {
+		t.Errorf("Expected no error, got %v", err)
+	}
+
+	if err := store.Set("jane", Person{Name: "Jane Doe", Age: 36}); err != nil {
+		t.Errorf("Expected no error, got %v", err)
+	}
+
+	if err := store.Set("bob", Person{Name: "Bob Smith", Age: 27}); err != nil {
+		t.Errorf("Expected no error, got %v", err)
+	}
 
 	// Retrieve a person from the store
 	if val, err := store.Get("john"); err != nil {
@@ -209,7 +226,9 @@ func BenchmarkSet(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		store.Set("person", value)
+		if err := store.Set("person", value); err != nil {
+			b.Errorf("Expected no error, got %v", err)
+		}
 	}
 }
 
@@ -219,11 +238,15 @@ func BenchmarkGet(b *testing.B) {
 		Name: "Alice",
 		Age:  30,
 	}
-	store.Set("person", value)
+	if err := store.Set("person", value); err != nil {
+		b.Errorf("Expected no error, got %v", err)
+	}
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		store.Get("person")
+		if _, err := store.Get("person"); err != nil {
+			b.Errorf("Expected no error, got %v", err)
+		}
 	}
 }
 
@@ -233,10 +256,14 @@ func BenchmarkDelete(b *testing.B) {
 		Name: "Alice",
 		Age:  30,
 	}
-	store.Set("person", value)
+	if err := store.Set("person", value); err != nil {
+		b.Errorf("Expected no error, got %v", err)
+	}
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		store.Delete("person")
+		if err := store.Delete("person"); err != nil {
+			b.Errorf("Expected no error, got %v", err)
+		}
 	}
 }
