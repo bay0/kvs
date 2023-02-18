@@ -122,4 +122,7 @@ func main() {
 			log.Fatal(err)
 		}
 	}
+
+	// Print the size of the key-value store
+	log.Printf("Size of the key-value store: %s", store.Size())
 }

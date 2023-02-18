@@ -1,31 +1,6 @@
 // Package kvs provides a key-value store.
 package kvs
 
-import (
-	"fmt"
-	"sync"
-)
-
-// ErrCode is an enumeration of error codes for the key-value store.
-type ErrCode int
-
-const (
-	ErrUnknown ErrCode = iota
-	ErrNotFound
-	ErrDuplicate
-)
-
-var errMsg = map[ErrCode]string{
-	ErrUnknown:   "unknown error",
-	ErrNotFound:  "item not found",
-	ErrDuplicate: "item already exists",
-}
-
-// Error returns the string representation of an error code.
-func (c ErrCode) Error() string {
-	return fmt.Sprintf("kvs: %v", errMsg[c])
-}
-
 // Value is an interface that defines the methods that a value in the key-value store must implement.
 type Value interface {
 	// Clone creates a copy of the value.
@@ -54,13 +29,6 @@ type Store interface {
 type KeyValueStore struct {
 	shards []*shard
 	count  int
-}
-
-// shard represents a partition of the key-value store.
-type shard struct {
-	id    int
-	mu    sync.RWMutex
-	store map[string]Value
 }
 
 // NewKeyValueStore creates a new KeyValueStore instance with a specified number of shards.
@@ -155,12 +123,16 @@ func (kvs *KeyValueStore) Keys() ([]string, error) {
 	return keys, nil
 }
 
-// Keys returns a slice of all the keys in the shard.
-func (s *shard) Keys() ([]string, error) {
-	keys := make([]string, 0, len(s.store))
-	for k := range s.store {
-		keys = append(keys, k)
+// Size returns the size of the store in human-readable format.
+func (kvs *KeyValueStore) Size() string {
+	var totalSize uint64
+
+	for _, sh := range kvs.shards {
+		sh.mu.RLock()
+		size := uint64(len(sh.store))
+		totalSize += size
+		sh.mu.RUnlock()
 	}
 
-	return keys, nil
+	return formatSize(totalSize)
 }
