@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"path/filepath"
 
 	"github.com/bay0/kvs"
 )
@@ -101,13 +100,26 @@ func main() {
 			log.Printf("Error storing HTML content for URL %s: %v\n", u, err)
 			continue
 		}
+	}
 
-		// Export the HTML content to a file
-		filename := filepath.Join("html", parsedURL.Host+".html")
-		err = os.WriteFile(filename, html, os.ModePerm)
+	// Export the HTML content to files
+	keys, err := store.Keys()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	for _, k := range keys {
+		v, err := store.Get(k)
 		if err != nil {
-			log.Printf("Error exporting HTML content for URL %s: %v\n", u, err)
-			continue
+			log.Fatal(err)
+		}
+
+		html := v.(HTMLValue)
+
+		// Write the HTML content to a file
+		err = os.WriteFile("html/"+k+".html", []byte(html.Content), os.ModePerm)
+		if err != nil {
+			log.Fatal(err)
 		}
 	}
 }
