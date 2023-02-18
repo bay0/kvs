@@ -1,19 +1,17 @@
-package kvs_test
+package kvs
 
 import (
 	"fmt"
 	"testing"
-
-	"github.com/bay0/kvs"
 )
 
 type IntValue int
 
-func (iv IntValue) Clone() kvs.Value {
+func (iv IntValue) Clone() Value {
 	return iv
 }
 func TestSet(t *testing.T) {
-	store := kvs.NewKeyValueStore()
+	store := NewKeyValueStore()
 	value := &Person{
 		Name: "Alice",
 		Age:  30,
@@ -34,7 +32,7 @@ func TestSet(t *testing.T) {
 }
 
 func TestGet(t *testing.T) {
-	store := kvs.NewKeyValueStore()
+	store := NewKeyValueStore()
 	value := &Person{
 		Name: "Alice",
 		Age:  30,
@@ -54,7 +52,7 @@ func TestGet(t *testing.T) {
 }
 
 func TestDelete(t *testing.T) {
-	store := kvs.NewKeyValueStore()
+	store := NewKeyValueStore()
 	value := &Person{
 		Name: "Alice",
 		Age:  30,
@@ -79,7 +77,7 @@ func TestDelete(t *testing.T) {
 }
 
 func TestKeys(t *testing.T) {
-	store := kvs.NewKeyValueStore()
+	store := NewKeyValueStore()
 	value := &Person{
 		Name: "Alice",
 		Age:  30,
@@ -103,7 +101,7 @@ func TestKeyValueStore(t *testing.T) {
 }
 
 func TestKeyValueStore_Concurrent(t *testing.T) {
-	kvs := kvs.NewKeyValueStore()
+	store := NewKeyValueStore()
 
 	// Set up a channel to communicate between goroutines
 	done := make(chan bool)
@@ -113,7 +111,7 @@ func TestKeyValueStore_Concurrent(t *testing.T) {
 		go func(j int) {
 			for k := 0; k < 1000; k++ {
 				key := fmt.Sprintf("key-%d-%d", j, k)
-				err := kvs.Set(key, IntValue(j))
+				err := store.Set(key, IntValue(j))
 				if err != nil {
 					t.Errorf("Expected no error, got %v", err)
 				}
@@ -130,9 +128,9 @@ func TestKeyValueStore_Concurrent(t *testing.T) {
 	// Use multiple goroutines to read from the key-value store
 	for i := 0; i < 10; i++ {
 		go func(j int) {
-			for k := 0; k < 1000 && k < len(kvs.Keys()); k++ {
+			for k := 0; k < 1000 && k < len(store.Keys()); k++ {
 				key := fmt.Sprintf("key-%d-%d", j, k)
-				val, err := kvs.Get(key)
+				val, err := store.Get(key)
 				if err != nil {
 					t.Errorf("Expected no error, got %v", err)
 				}
@@ -150,7 +148,7 @@ type Person struct {
 	Age  int
 }
 
-func (p Person) Clone() kvs.Value {
+func (p Person) Clone() Value {
 	return Person{
 		Name: p.Name,
 		Age:  p.Age,
@@ -158,7 +156,7 @@ func (p Person) Clone() kvs.Value {
 }
 
 func TestKeyValueStore_Struct(t *testing.T) {
-	store := kvs.NewKeyValueStore()
+	store := NewKeyValueStore()
 
 	// Add some people to the store
 	if err := store.Set("john", Person{Name: "John Doe", Age: 42}); err != nil {
@@ -218,7 +216,7 @@ func TestKeyValueStore_Struct(t *testing.T) {
 }
 
 func BenchmarkSet(b *testing.B) {
-	store := kvs.NewKeyValueStore()
+	store := NewKeyValueStore()
 	value := &Person{
 		Name: "Alice",
 		Age:  30,
@@ -233,7 +231,7 @@ func BenchmarkSet(b *testing.B) {
 }
 
 func BenchmarkGet(b *testing.B) {
-	store := kvs.NewKeyValueStore()
+	store := NewKeyValueStore()
 	value := &Person{
 		Name: "Alice",
 		Age:  30,
@@ -251,7 +249,7 @@ func BenchmarkGet(b *testing.B) {
 }
 
 func BenchmarkDelete(b *testing.B) {
-	store := kvs.NewKeyValueStore()
+	store := NewKeyValueStore()
 	value := &Person{
 		Name: "Alice",
 		Age:  30,
