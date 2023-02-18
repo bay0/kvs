@@ -57,8 +57,8 @@ func (p *Person) Clone() kvs.Value {
 }
 
 func main() {
- // Create a new key-value store
- store := kvs.NewKeyValueStore()
+ // Create a new key-value store with sharding enabled
+ store := kvs.NewKeyValueStore(2)
 
  // Create a new person value
  person := &Person{

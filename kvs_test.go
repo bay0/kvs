@@ -10,6 +10,7 @@ type IntValue int
 func (iv IntValue) Clone() Value {
 	return iv
 }
+
 func TestSet(t *testing.T) {
 	store := NewKeyValueStore(10)
 	value := &Person{
