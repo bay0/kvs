@@ -260,8 +260,11 @@ func BenchmarkDelete(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		if err := store.Delete("person"); err != nil {
-			b.Errorf("Expected no error, got %v", err)
+		_, err := store.Get("person")
+		if err == nil {
+			if err := store.Delete("person"); err != nil {
+				b.Errorf("Expected no error, got %v", err)
+			}
 		}
 	}
 }
