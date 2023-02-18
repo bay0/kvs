@@ -11,7 +11,7 @@ func (iv IntValue) Clone() Value {
 	return iv
 }
 func TestSet(t *testing.T) {
-	store := NewKeyValueStore()
+	store := NewKeyValueStore(10)
 	value := &Person{
 		Name: "Alice",
 		Age:  30,
@@ -32,7 +32,7 @@ func TestSet(t *testing.T) {
 }
 
 func TestGet(t *testing.T) {
-	store := NewKeyValueStore()
+	store := NewKeyValueStore(10)
 	value := &Person{
 		Name: "Alice",
 		Age:  30,
@@ -52,7 +52,7 @@ func TestGet(t *testing.T) {
 }
 
 func TestDelete(t *testing.T) {
-	store := NewKeyValueStore()
+	store := NewKeyValueStore(10)
 	value := &Person{
 		Name: "Alice",
 		Age:  30,
@@ -77,7 +77,7 @@ func TestDelete(t *testing.T) {
 }
 
 func TestKeys(t *testing.T) {
-	store := NewKeyValueStore()
+	store := NewKeyValueStore(10)
 	value := &Person{
 		Name: "Alice",
 		Age:  30,
@@ -87,7 +87,12 @@ func TestKeys(t *testing.T) {
 		t.Errorf("Set returned an error: %v", err)
 	}
 
-	keys := store.Keys()
+	keys, err := store.Keys()
+
+	if err != nil {
+		t.Errorf("Keys returned an error: %v", err)
+	}
+
 	if len(keys) != 1 || keys[0] != "person" {
 		t.Errorf("Keys returned unexpected result: %v", keys)
 	}
@@ -101,7 +106,7 @@ func TestKeyValueStore(t *testing.T) {
 }
 
 func TestKeyValueStore_Concurrent(t *testing.T) {
-	store := NewKeyValueStore()
+	store := NewKeyValueStore(10)
 
 	// Set up a channel to communicate between goroutines
 	done := make(chan bool)
@@ -128,7 +133,12 @@ func TestKeyValueStore_Concurrent(t *testing.T) {
 	// Use multiple goroutines to read from the key-value store
 	for i := 0; i < 10; i++ {
 		go func(j int) {
-			for k := 0; k < 1000 && k < len(store.Keys()); k++ {
+			keys, err := store.Keys()
+			if err != nil {
+				t.Errorf("Expected no error, got %v", err)
+			}
+
+			for k := 0; k < 1000 && k < len(keys); k++ {
 				key := fmt.Sprintf("key-%d-%d", j, k)
 				val, err := store.Get(key)
 				if err != nil {
@@ -156,7 +166,7 @@ func (p Person) Clone() Value {
 }
 
 func TestKeyValueStore_Struct(t *testing.T) {
-	store := NewKeyValueStore()
+	store := NewKeyValueStore(5)
 
 	// Add some people to the store
 	if err := store.Set("john", Person{Name: "John Doe", Age: 42}); err != nil {
@@ -196,7 +206,13 @@ func TestKeyValueStore_Struct(t *testing.T) {
 		{Name: "Jane Doe", Age: 36},
 	}
 	var actual []Person
-	for _, key := range store.Keys() {
+	keys, err := store.Keys()
+
+	if err != nil {
+		t.Errorf("Expected no error, got %v", err)
+	}
+
+	for _, key := range keys {
 		if val, err := store.Get(key); err != nil {
 			t.Errorf("Expected no error, got %v", err)
 		} else if p, ok := val.(Person); !ok {
@@ -205,18 +221,28 @@ func TestKeyValueStore_Struct(t *testing.T) {
 			actual = append(actual, p)
 		}
 	}
+
 	if len(actual) != len(expected) {
 		t.Errorf("Expected %d people, got %d", len(expected), len(actual))
 	}
-	for i, p := range expected {
-		if actual[i] != p {
-			t.Errorf("Expected %v, got %v", p, actual[i])
+	for _, p := range expected {
+		if !contains(actual, p) {
+			t.Errorf("Expected %v, got %v", p, actual)
 		}
 	}
 }
 
+func contains(persons []Person, p Person) bool {
+	for _, person := range persons {
+		if person == p {
+			return true
+		}
+	}
+	return false
+}
+
 func BenchmarkSet(b *testing.B) {
-	store := NewKeyValueStore()
+	store := NewKeyValueStore(10)
 	value := &Person{
 		Name: "Alice",
 		Age:  30,
@@ -231,7 +257,7 @@ func BenchmarkSet(b *testing.B) {
 }
 
 func BenchmarkGet(b *testing.B) {
-	store := NewKeyValueStore()
+	store := NewKeyValueStore(10)
 	value := &Person{
 		Name: "Alice",
 		Age:  30,
@@ -249,7 +275,7 @@ func BenchmarkGet(b *testing.B) {
 }
 
 func BenchmarkDelete(b *testing.B) {
-	store := NewKeyValueStore()
+	store := NewKeyValueStore(10)
 	value := &Person{
 		Name: "Alice",
 		Age:  30,
