@@ -1,4 +1,4 @@
-// Package kvs provides a key-value store.
+// Package kvs provides an in-memory key-value store implementation that supports sharding, batching, and transactions.
 package kvs
 
 // Value is an interface that defines the methods that a value in the key-value store must implement.
@@ -9,17 +9,33 @@ type Value interface {
 
 // Store is an interface that defines the methods that a key-value store must implement.
 type Store interface {
+	// Begin starts a transaction that wraps a series of read and write operations.
+	// The transaction must be committed or rolled back before subsequent read and write operations.
+	Begin() error
+
+	// Commit commits a previously started transaction, applying all the operations.
+	Commit() error
+
+	// Rollback cancels a previously started transaction, discarding all the operations.
+	Rollback() error
+
 	// Get retrieves the value associated with the given key from the store.
-	// If the key is not found in the store, it returns an error.
+	// If the key is not found in the store, it returns an ErrNotFound error.
 	Get(key string) (Value, error)
 
 	// Set adds or updates the given key-value pair in the store.
 	// If the key already exists, it overwrites the previous value.
 	Set(key string, val Value) error
 
+	// BatchSet adds or updates multiple key-value pairs in the store within a single transaction.
+	BatchSet(kvMap map[string]Value) error
+
 	// Delete removes the key-value pair associated with the given key from the store.
-	// If the key is not found in the store, it returns an error.
+	// If the key is not found in the store, it returns an ErrNotFound error.
 	Delete(key string) error
+
+	// BatchDelete removes multiple key-value pairs from the store within a single transaction.
+	BatchDelete(keys []string) error
 
 	// Keys returns a slice of all the keys in the store.
 	Keys() []string
@@ -57,6 +73,34 @@ func (kvs *KeyValueStore) shardIndex(key string) int {
 	return int(h) % kvs.count
 }
 
+// Begin starts a transaction that wraps a series of read and write operations.
+// The transaction must be committed or rolled back before subsequent read and write operations.
+func (kvs *KeyValueStore) Begin() error {
+	for _, sh := range kvs.shards {
+		sh.mu.Lock()
+	}
+
+	return nil
+}
+
+// Commit commits a previously started transaction, applying all the operations.
+func (kvs *KeyValueStore) Commit() error {
+	for _, sh := range kvs.shards {
+		sh.mu.Unlock()
+	}
+
+	return nil
+}
+
+// Rollback cancels a previously started transaction, discarding all the operations.
+func (kvs *KeyValueStore) Rollback() error {
+	for _, sh := range kvs.shards {
+		sh.mu.Unlock()
+	}
+
+	return nil
+}
+
 // Set adds or updates the given key-value pair in the store.
 // If the key already exists, it overwrites the previous value.
 func (kvs *KeyValueStore) Set(key string, val Value) error {
@@ -67,6 +111,33 @@ func (kvs *KeyValueStore) Set(key string, val Value) error {
 	defer sh.mu.Unlock()
 
 	sh.store[key] = val
+	return nil
+}
+
+// BatchSet adds or updates multiple key-value pairs in the store within a single transaction.
+func (kvs *KeyValueStore) BatchSet(kvMap map[string]Value) error {
+	// Start a transaction
+	err := kvs.Begin()
+	if err != nil {
+		return err
+	}
+
+	// Set all key-value pairs in the transaction
+	for key, val := range kvMap {
+		index := kvs.shardIndex(key)
+		sh := kvs.shards[index]
+
+		sh.mu.Lock()
+		sh.store[key] = val
+		sh.mu.Unlock()
+	}
+
+	// Commit the transaction
+	err = kvs.Commit()
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -102,6 +173,33 @@ func (kvs *KeyValueStore) Delete(key string) error {
 	}
 
 	delete(sh.store, key)
+
+	return nil
+}
+
+// BatchDelete removes multiple key-value pairs from the store within a single transaction.
+func (kvs *KeyValueStore) BatchDelete(keys []string) error {
+	// Start a transaction
+	err := kvs.Begin()
+	if err != nil {
+		return err
+	}
+
+	// Delete all key-value pairs in the transaction
+	for _, key := range keys {
+		index := kvs.shardIndex(key)
+		sh := kvs.shards[index]
+
+		sh.mu.Lock()
+		delete(sh.store, key)
+		sh.mu.Unlock()
+	}
+
+	// Commit the transaction
+	err = kvs.Commit()
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
