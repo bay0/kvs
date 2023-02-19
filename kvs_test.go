@@ -11,6 +11,18 @@ func (iv IntValue) Clone() Value {
 	return iv
 }
 
+type Person struct {
+	Name string
+	Age  int
+}
+
+func (p Person) Clone() Value {
+	return Person{
+		Name: p.Name,
+		Age:  p.Age,
+	}
+}
+
 func TestSet(t *testing.T) {
 	store := NewKeyValueStore(10)
 	value := &Person{
@@ -151,18 +163,6 @@ func TestKeyValueStore_Concurrent(t *testing.T) {
 			}
 			done <- true
 		}(i)
-	}
-}
-
-type Person struct {
-	Name string
-	Age  int
-}
-
-func (p Person) Clone() Value {
-	return Person{
-		Name: p.Name,
-		Age:  p.Age,
 	}
 }
 
