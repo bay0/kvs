@@ -24,13 +24,17 @@ func (p Person) Clone() Value {
 }
 
 func TestSet(t *testing.T) {
-	store := NewKeyValueStore(10)
+	store, err := NewKeyValueStore(10)
+	if err != nil {
+		t.Errorf("NewKeyValueStore returned an error: %v", err)
+	}
+
 	value := &Person{
 		Name: "Alice",
 		Age:  30,
 	}
 
-	err := store.Set("person", value)
+	err = store.Set("person", value)
 	if err != nil {
 		t.Errorf("Set returned an error: %v", err)
 	}
@@ -45,7 +49,11 @@ func TestSet(t *testing.T) {
 }
 
 func TestGet(t *testing.T) {
-	store := NewKeyValueStore(10)
+	store, err := NewKeyValueStore(10)
+	if err != nil {
+		t.Errorf("NewKeyValueStore returned an error: %v", err)
+	}
+
 	value := &Person{
 		Name: "Alice",
 		Age:  30,
@@ -65,7 +73,11 @@ func TestGet(t *testing.T) {
 }
 
 func TestDelete(t *testing.T) {
-	store := NewKeyValueStore(10)
+	store, err := NewKeyValueStore(10)
+	if err != nil {
+		t.Errorf("NewKeyValueStore returned an error: %v", err)
+	}
+
 	value := &Person{
 		Name: "Alice",
 		Age:  30,
@@ -75,7 +87,7 @@ func TestDelete(t *testing.T) {
 		t.Errorf("Set returned an error: %v", err)
 	}
 
-	err := store.Delete("person")
+	err = store.Delete("person")
 	if err != nil {
 		t.Errorf("Delete returned an error: %v", err)
 	}
@@ -90,7 +102,11 @@ func TestDelete(t *testing.T) {
 }
 
 func TestKeys(t *testing.T) {
-	store := NewKeyValueStore(10)
+	store, err := NewKeyValueStore(10)
+	if err != nil {
+		t.Errorf("NewKeyValueStore returned an error: %v", err)
+	}
+
 	value := &Person{
 		Name: "Alice",
 		Age:  30,
@@ -119,7 +135,10 @@ func TestKeyValueStore(t *testing.T) {
 }
 
 func TestKeyValueStore_Concurrent(t *testing.T) {
-	store := NewKeyValueStore(10)
+	store, err := NewKeyValueStore(10)
+	if err != nil {
+		t.Errorf("NewKeyValueStore returned an error: %v", err)
+	}
 
 	// Set up a channel to communicate between goroutines
 	done := make(chan bool)
@@ -167,7 +186,10 @@ func TestKeyValueStore_Concurrent(t *testing.T) {
 }
 
 func TestKeyValueStore_Struct(t *testing.T) {
-	store := NewKeyValueStore(5)
+	store, err := NewKeyValueStore(5)
+	if err != nil {
+		t.Errorf("NewKeyValueStore returned an error: %v", err)
+	}
 
 	// Add some people to the store
 	if err := store.Set("john", Person{Name: "John Doe", Age: 42}); err != nil {
@@ -243,7 +265,11 @@ func contains(persons []Person, p Person) bool {
 }
 
 func BenchmarkSet(b *testing.B) {
-	store := NewKeyValueStore(10)
+	store, err := NewKeyValueStore(10)
+	if err != nil {
+		b.Errorf("NewKeyValueStore returned an error: %v", err)
+	}
+
 	value := &Person{
 		Name: "Alice",
 		Age:  30,
@@ -258,7 +284,10 @@ func BenchmarkSet(b *testing.B) {
 }
 
 func BenchmarkGet(b *testing.B) {
-	store := NewKeyValueStore(10)
+	store, err := NewKeyValueStore(10)
+	if err != nil {
+		b.Errorf("NewKeyValueStore returned an error: %v", err)
+	}
 	value := &Person{
 		Name: "Alice",
 		Age:  30,
@@ -276,7 +305,11 @@ func BenchmarkGet(b *testing.B) {
 }
 
 func BenchmarkDelete(b *testing.B) {
-	store := NewKeyValueStore(10)
+	store, err := NewKeyValueStore(10)
+	if err != nil {
+		b.Errorf("NewKeyValueStore returned an error: %v", err)
+	}
+
 	value := &Person{
 		Name: "Alice",
 		Age:  30,

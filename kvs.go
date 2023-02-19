@@ -32,7 +32,11 @@ type KeyValueStore struct {
 }
 
 // NewKeyValueStore creates a new KeyValueStore instance with a specified number of shards.
-func NewKeyValueStore(numShards int) *KeyValueStore {
+func NewKeyValueStore(numShards int) (*KeyValueStore, error) {
+	if numShards <= 0 {
+		return nil, ErrInvalidNumShards
+	}
+
 	shards := make([]*shard, numShards)
 	for i := 0; i < numShards; i++ {
 		shards[i] = &shard{
@@ -44,7 +48,7 @@ func NewKeyValueStore(numShards int) *KeyValueStore {
 	return &KeyValueStore{
 		shards: shards,
 		count:  numShards,
-	}
+	}, nil
 }
 
 // shardIndex returns the index of the shard that should contain a given key.

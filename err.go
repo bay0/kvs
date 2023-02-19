@@ -9,12 +9,14 @@ const (
 	ErrUnknown ErrCode = iota
 	ErrNotFound
 	ErrDuplicate
+	ErrInvalidNumShards
 )
 
 var errMsg = map[ErrCode]string{
-	ErrUnknown:   "unknown error",
-	ErrNotFound:  "item not found",
-	ErrDuplicate: "item already exists",
+	ErrUnknown:          "unknown error",
+	ErrNotFound:         "item not found",
+	ErrDuplicate:        "item already exists",
+	ErrInvalidNumShards: "invalid number of shards",
 }
 
 // Error returns the string representation of an error code.
