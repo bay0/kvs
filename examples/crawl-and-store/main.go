@@ -22,7 +22,10 @@ func (h HTMLValue) Clone() kvs.Value {
 
 func main() {
 	// Create a new key-value store
-	store := kvs.NewKeyValueStore(10)
+	store, err := kvs.NewKeyValueStore(128)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	// URLs to crawl
 	urls := []string{
@@ -65,7 +68,7 @@ func main() {
 	}
 
 	// Create a directory to store the exported HTML files
-	err := os.Mkdir("html", os.ModePerm)
+	err = os.Mkdir("html", os.ModePerm)
 	if err != nil {
 		log.Fatal(err)
 	}
