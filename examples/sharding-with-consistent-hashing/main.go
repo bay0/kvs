@@ -29,11 +29,17 @@ func (sv StringValue) Clone() kvs.Value {
 
 func main() {
 	// Create a cluster of nodes
+	store1, _ := kvs.NewKeyValueStore(16)
+
+	store2, _ := kvs.NewKeyValueStore(16)
+
+	store3, _ := kvs.NewKeyValueStore(16)
+
 	cluster := &Cluster{
 		Nodes: []Node{
-			{ID: 1, Store: kvs.NewKeyValueStore(2)},
-			{ID: 2, Store: kvs.NewKeyValueStore(2)},
-			{ID: 3, Store: kvs.NewKeyValueStore(2)},
+			{ID: 1, Store: store1},
+			{ID: 2, Store: store2},
+			{ID: 3, Store: store3},
 		},
 	}
 
