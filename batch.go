@@ -26,11 +26,6 @@ func (kvs *KeyValueStore) BatchGet(keys []string) (*BatchGetResult, error) {
 	}
 
 	// Group keys by shard to minimize locking
-	type shardKeys struct {
-		shardID int
-		keys    []string
-	}
-
 	shardMap := make(map[int][]string)
 	for _, key := range keys {
 		shardID := kvs.shardIndex(key)

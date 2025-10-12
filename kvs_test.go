@@ -467,37 +467,51 @@ func TestLen_SetDelete(t *testing.T) {
 	}
 
 	// Add 3 keys
-	store.Set("key1", IntValue(1))
-	store.Set("key2", IntValue(2))
-	store.Set("key3", IntValue(3))
+	if err := store.Set("key1", IntValue(1)); err != nil {
+		t.Fatalf("Set key1 failed: %v", err)
+	}
+	if err := store.Set("key2", IntValue(2)); err != nil {
+		t.Fatalf("Set key2 failed: %v", err)
+	}
+	if err := store.Set("key3", IntValue(3)); err != nil {
+		t.Fatalf("Set key3 failed: %v", err)
+	}
 
 	if length := store.Len(); length != 3 {
 		t.Errorf("After 3 Sets, Len = %d, expected 3", length)
 	}
 
 	// Update existing key (should not change count)
-	store.Set("key1", IntValue(10))
+	if err := store.Set("key1", IntValue(10)); err != nil {
+		t.Fatalf("Set key1 update failed: %v", err)
+	}
 
 	if length := store.Len(); length != 3 {
 		t.Errorf("After updating key1, Len = %d, expected 3", length)
 	}
 
 	// Delete one key
-	store.Delete("key2")
+	if err := store.Delete("key2"); err != nil {
+		t.Fatalf("Delete key2 failed: %v", err)
+	}
 
 	if length := store.Len(); length != 2 {
 		t.Errorf("After deleting key2, Len = %d, expected 2", length)
 	}
 
 	// Delete another key
-	store.Delete("key1")
+	if err := store.Delete("key1"); err != nil {
+		t.Fatalf("Delete key1 failed: %v", err)
+	}
 
 	if length := store.Len(); length != 1 {
 		t.Errorf("After deleting key1, Len = %d, expected 1", length)
 	}
 
 	// Delete last key
-	store.Delete("key3")
+	if err := store.Delete("key3"); err != nil {
+		t.Fatalf("Delete key3 failed: %v", err)
+	}
 
 	if length := store.Len(); length != 0 {
 		t.Errorf("After deleting all keys, Len = %d, expected 0", length)
@@ -521,7 +535,9 @@ func TestLen_Concurrent(t *testing.T) {
 		go func(j int) {
 			for k := 0; k < keysPerGoroutine; k++ {
 				key := fmt.Sprintf("key-%d-%d", j, k)
-				store.Set(key, IntValue(j))
+				if err := store.Set(key, IntValue(j)); err != nil {
+					t.Errorf("Set failed: %v", err)
+				}
 			}
 			done <- true
 		}(i)
@@ -543,7 +559,9 @@ func TestLen_Concurrent(t *testing.T) {
 		go func(j int) {
 			for k := 0; k < keysPerGoroutine; k++ {
 				key := fmt.Sprintf("key-%d-%d", j, k)
-				store.Delete(key)
+				if err := store.Delete(key); err != nil {
+					t.Errorf("Delete failed: %v", err)
+				}
 			}
 			done <- true
 		}(i)
@@ -570,9 +588,15 @@ func TestBatchGet_AllExisting(t *testing.T) {
 	}
 
 	// Set up test data
-	store.Set("key1", IntValue(1))
-	store.Set("key2", IntValue(2))
-	store.Set("key3", IntValue(3))
+	if err := store.Set("key1", IntValue(1)); err != nil {
+		t.Fatalf("Set key1 failed: %v", err)
+	}
+	if err := store.Set("key2", IntValue(2)); err != nil {
+		t.Fatalf("Set key2 failed: %v", err)
+	}
+	if err := store.Set("key3", IntValue(3)); err != nil {
+		t.Fatalf("Set key3 failed: %v", err)
+	}
 
 	// Batch get all keys
 	result, err := store.BatchGet([]string{"key1", "key2", "key3"})
@@ -609,8 +633,12 @@ func TestBatchGet_MixedKeys(t *testing.T) {
 	}
 
 	// Set up test data (only key1 and key3 exist)
-	store.Set("key1", IntValue(1))
-	store.Set("key3", IntValue(3))
+	if err := store.Set("key1", IntValue(1)); err != nil {
+		t.Fatalf("Set key1 failed: %v", err)
+	}
+	if err := store.Set("key3", IntValue(3)); err != nil {
+		t.Fatalf("Set key3 failed: %v", err)
+	}
 
 	// Batch get with mixed keys
 	result, err := store.BatchGet([]string{"key1", "key2", "key3", "key4"})
@@ -704,7 +732,9 @@ func TestBatchGet_DuplicateKeys(t *testing.T) {
 		t.Fatalf("NewKeyValueStore returned an error: %v", err)
 	}
 
-	store.Set("key1", IntValue(42))
+	if err := store.Set("key1", IntValue(42)); err != nil {
+		t.Fatalf("Set key1 failed: %v", err)
+	}
 
 	// Batch get with duplicate keys
 	result, err := store.BatchGet([]string{"key1", "key1", "key1"})
@@ -729,7 +759,9 @@ func TestBatchGet_SingleKey(t *testing.T) {
 		t.Fatalf("NewKeyValueStore returned an error: %v", err)
 	}
 
-	store.Set("single", IntValue(100))
+	if err := store.Set("single", IntValue(100)); err != nil {
+		t.Fatalf("Set single failed: %v", err)
+	}
 
 	// Batch get with single key
 	result, err := store.BatchGet([]string{"single"})
@@ -758,7 +790,9 @@ func TestBatchGet_MultipleShards(t *testing.T) {
 	for i := 0; i < 20; i++ {
 		key := fmt.Sprintf("key%d", i)
 		keys = append(keys, key)
-		store.Set(key, IntValue(i))
+		if err := store.Set(key, IntValue(i)); err != nil {
+			t.Fatalf("Set %s failed: %v", key, err)
+		}
 	}
 
 	// Batch get all keys
@@ -786,7 +820,9 @@ func TestBatchGet_Concurrent(t *testing.T) {
 
 	// Pre-populate store
 	for i := 0; i < 100; i++ {
-		store.Set(fmt.Sprintf("key%d", i), IntValue(i))
+		if err := store.Set(fmt.Sprintf("key%d", i), IntValue(i)); err != nil {
+			t.Fatalf("Set key%d failed: %v", i, err)
+		}
 	}
 
 	done := make(chan bool)
@@ -811,7 +847,9 @@ func TestBatchGet_Concurrent(t *testing.T) {
 		go func(j int) {
 			for k := 0; k < 20; k++ {
 				key := fmt.Sprintf("newkey%d-%d", j, k)
-				store.Set(key, IntValue(j*100+k))
+				if err := store.Set(key, IntValue(j*100+k)); err != nil {
+					t.Errorf("Set %s failed: %v", key, err)
+				}
 			}
 			done <- true
 		}(i)
@@ -871,8 +909,12 @@ func TestBatchSet_MixedKeys(t *testing.T) {
 	}
 
 	// Pre-set some keys
-	store.Set("key1", IntValue(100))
-	store.Set("key2", IntValue(200))
+	if err := store.Set("key1", IntValue(100)); err != nil {
+		t.Fatalf("Set key1 failed: %v", err)
+	}
+	if err := store.Set("key2", IntValue(200)); err != nil {
+		t.Fatalf("Set key2 failed: %v", err)
+	}
 
 	// Batch set with mixed keys (update key1, key2; add key3, key4)
 	items := map[string]Value{
@@ -946,7 +988,9 @@ func TestBatchSet_UpdatesLen(t *testing.T) {
 		"k4": IntValue(4),
 		"k5": IntValue(5),
 	}
-	store.BatchSet(items)
+	if _, err := store.BatchSet(items); err != nil {
+		t.Fatalf("BatchSet failed: %v", err)
+	}
 
 	if store.Len() != 5 {
 		t.Errorf("After BatchSet, Len = %d, expected 5", store.Len())
@@ -957,7 +1001,9 @@ func TestBatchSet_UpdatesLen(t *testing.T) {
 		"k1": IntValue(10),
 		"k3": IntValue(30),
 	}
-	store.BatchSet(updates)
+	if _, err := store.BatchSet(updates); err != nil {
+		t.Fatalf("BatchSet updates failed: %v", err)
+	}
 
 	if store.Len() != 5 {
 		t.Errorf("After updating, Len = %d, expected 5", store.Len())
@@ -969,7 +1015,9 @@ func TestBatchSet_UpdatesLen(t *testing.T) {
 		"k7": IntValue(7),
 		"k8": IntValue(8),
 	}
-	store.BatchSet(more)
+	if _, err := store.BatchSet(more); err != nil {
+		t.Fatalf("BatchSet more failed: %v", err)
+	}
 
 	if store.Len() != 8 {
 		t.Errorf("After adding more, Len = %d, expected 8", store.Len())
@@ -1062,9 +1110,15 @@ func TestBatchDelete_AllExisting(t *testing.T) {
 	}
 
 	// Set up test data
-	store.Set("key1", IntValue(1))
-	store.Set("key2", IntValue(2))
-	store.Set("key3", IntValue(3))
+	if err := store.Set("key1", IntValue(1)); err != nil {
+		t.Fatalf("Set key1 failed: %v", err)
+	}
+	if err := store.Set("key2", IntValue(2)); err != nil {
+		t.Fatalf("Set key2 failed: %v", err)
+	}
+	if err := store.Set("key3", IntValue(3)); err != nil {
+		t.Fatalf("Set key3 failed: %v", err)
+	}
 
 	// Batch delete all keys
 	result, err := store.BatchDelete([]string{"key1", "key2", "key3"})
@@ -1097,8 +1151,12 @@ func TestBatchDelete_MixedKeys(t *testing.T) {
 	}
 
 	// Set up test data (only key1 and key3 exist)
-	store.Set("key1", IntValue(1))
-	store.Set("key3", IntValue(3))
+	if err := store.Set("key1", IntValue(1)); err != nil {
+		t.Fatalf("Set key1 failed: %v", err)
+	}
+	if err := store.Set("key3", IntValue(3)); err != nil {
+		t.Fatalf("Set key3 failed: %v", err)
+	}
 
 	// Batch delete with mixed keys
 	result, err := store.BatchDelete([]string{"key1", "key2", "key3", "key4"})
@@ -1162,7 +1220,9 @@ func TestBatchDelete_UpdatesLen(t *testing.T) {
 
 	// Add 10 keys
 	for i := 0; i < 10; i++ {
-		store.Set(fmt.Sprintf("key%d", i), IntValue(i))
+		if err := store.Set(fmt.Sprintf("key%d", i), IntValue(i)); err != nil {
+			t.Fatalf("Set key%d failed: %v", i, err)
+		}
 	}
 
 	if store.Len() != 10 {
@@ -1171,7 +1231,10 @@ func TestBatchDelete_UpdatesLen(t *testing.T) {
 
 	// Delete 5 keys
 	keysToDelete := []string{"key0", "key2", "key4", "key6", "key8"}
-	result, _ := store.BatchDelete(keysToDelete)
+	result, err := store.BatchDelete(keysToDelete)
+	if err != nil {
+		t.Fatalf("BatchDelete failed: %v", err)
+	}
 
 	if result.Deleted != 5 {
 		t.Errorf("Expected 5 deletions, got %d", result.Deleted)
@@ -1183,7 +1246,9 @@ func TestBatchDelete_UpdatesLen(t *testing.T) {
 
 	// Delete remaining keys
 	remainingKeys := []string{"key1", "key3", "key5", "key7", "key9"}
-	store.BatchDelete(remainingKeys)
+	if _, err := store.BatchDelete(remainingKeys); err != nil {
+		t.Fatalf("BatchDelete remaining keys failed: %v", err)
+	}
 
 	if store.Len() != 0 {
 		t.Errorf("After deleting all, Len = %d, expected 0", store.Len())
@@ -1203,7 +1268,9 @@ func TestBatchDelete_MultipleShards(t *testing.T) {
 	for i := 0; i < 50; i++ {
 		key := fmt.Sprintf("key%d", i)
 		keys = append(keys, key)
-		store.Set(key, IntValue(i))
+		if err := store.Set(key, IntValue(i)); err != nil {
+			t.Fatalf("Set %s failed: %v", key, err)
+		}
 	}
 
 	// Batch delete all keys
@@ -1237,7 +1304,9 @@ func TestBatchDelete_Concurrent(t *testing.T) {
 	for i := 0; i < numGoroutines; i++ {
 		for k := 0; k < keysPerGoroutine; k++ {
 			key := fmt.Sprintf("key-%d-%d", i, k)
-			store.Set(key, IntValue(i*100+k))
+			if err := store.Set(key, IntValue(i*100+k)); err != nil {
+				t.Fatalf("Set %s failed: %v", key, err)
+			}
 		}
 	}
 
@@ -1286,7 +1355,9 @@ func TestBatchDelete_DuplicateKeys(t *testing.T) {
 		t.Fatalf("NewKeyValueStore returned an error: %v", err)
 	}
 
-	store.Set("key1", IntValue(1))
+	if err := store.Set("key1", IntValue(1)); err != nil {
+		t.Fatalf("Set key1 failed: %v", err)
+	}
 
 	// Try to delete the same key multiple times
 	result, err := store.BatchDelete([]string{"key1", "key1", "key1"})
@@ -1403,7 +1474,9 @@ func TestSetWithTTL_UpdateExisting(t *testing.T) {
 	defer store.Close()
 
 	// Set a key without TTL
-	store.Set("key1", IntValue(100))
+	if err := store.Set("key1", IntValue(100)); err != nil {
+		t.Fatalf("Set key1 failed: %v", err)
+	}
 
 	// Update with TTL
 	err = store.SetWithTTL("key1", IntValue(200), 1*time.Second)
@@ -1498,7 +1571,9 @@ func TestTTLCleanup_ActiveCleanup(t *testing.T) {
 	// Set multiple keys with short TTL
 	for i := 0; i < 10; i++ {
 		key := fmt.Sprintf("key%d", i)
-		store.SetWithTTL(key, IntValue(i), 100*time.Millisecond)
+		if err := store.SetWithTTL(key, IntValue(i), 100*time.Millisecond); err != nil {
+			t.Fatalf("SetWithTTL %s failed: %v", key, err)
+		}
 	}
 
 	// Verify all keys exist
@@ -1527,7 +1602,9 @@ func TestClose_StopsCleanup(t *testing.T) {
 	}
 
 	// Set a key with TTL
-	store.SetWithTTL("key1", IntValue(100), 1*time.Second)
+	if err := store.SetWithTTL("key1", IntValue(100), 1*time.Second); err != nil {
+		t.Fatalf("SetWithTTL failed: %v", err)
+	}
 
 	// Close the store
 	err = store.Close()
@@ -1563,7 +1640,7 @@ func TestClose_MultipleGoroutines(t *testing.T) {
 		go func(j int) {
 			for k := 0; k < 100; k++ {
 				key := fmt.Sprintf("key-%d-%d", j, k)
-				store.Set(key, IntValue(k))
+				_ = store.Set(key, IntValue(k)) // Ignore errors as store may be closing
 			}
 			done <- true
 		}(i)
@@ -1634,7 +1711,9 @@ func TestNewKeyValueStoreWithHash_Distribution(t *testing.T) {
 	// Add keys that should go to different shards
 	keys := []string{"a1", "b1", "c1", "d1", "a2", "b2", "c2", "d2"}
 	for _, key := range keys {
-		store.Set(key, IntValue(1))
+		if err := store.Set(key, IntValue(1)); err != nil {
+			t.Fatalf("Set %s failed: %v", key, err)
+		}
 	}
 
 	// Verify all keys can be retrieved
@@ -1709,7 +1788,9 @@ func TestNewKeyValueStoreWithHash_Deterministic(t *testing.T) {
 	// Set a key multiple times and verify it goes to the same shard
 	key := "test-key"
 	for i := 0; i < 10; i++ {
-		store.Set(key, IntValue(i))
+		if err := store.Set(key, IntValue(i)); err != nil {
+			t.Errorf("Set failed on iteration %d: %v", i, err)
+		}
 		val, err := store.Get(key)
 		if err != nil {
 			t.Errorf("Get failed on iteration %d: %v", i, err)
@@ -1766,7 +1847,7 @@ func TestNewKeyValueStoreWithHash_OutOfBounds(t *testing.T) {
 	}()
 
 	// Try to use the store with a bad hash
-	store.Set("test", IntValue(100))
+	_ = store.Set("test", IntValue(100))
 }
 
 // TestNewKeyValueStoreWithHash_Concurrent tests concurrent operations with custom hash.
@@ -1795,7 +1876,9 @@ func TestNewKeyValueStoreWithHash_Concurrent(t *testing.T) {
 		go func(j int) {
 			for k := 0; k < keysPerGoroutine; k++ {
 				key := fmt.Sprintf("key-%d-%d", j, k)
-				store.Set(key, IntValue(j*100+k))
+				if err := store.Set(key, IntValue(j*100+k)); err != nil {
+					t.Errorf("Set %s failed: %v", key, err)
+				}
 			}
 			done <- true
 		}(i)
@@ -1872,7 +1955,9 @@ func TestSaveSnapshot_WithData(t *testing.T) {
 	// Add test data
 	for i := 0; i < 100; i++ {
 		key := fmt.Sprintf("key%d", i)
-		store.Set(key, IntValue(i))
+		if err := store.Set(key, IntValue(i)); err != nil {
+			t.Fatalf("Set %s failed: %v", key, err)
+		}
 	}
 
 	// Save snapshot
@@ -1904,9 +1989,15 @@ func TestSaveSnapshot_WithTTL(t *testing.T) {
 	defer store.Close()
 
 	// Add keys with TTL
-	store.SetWithTTL("ttl-key1", IntValue(100), 10*time.Second)
-	store.SetWithTTL("ttl-key2", IntValue(200), 20*time.Second)
-	store.Set("normal-key", IntValue(300))
+	if err := store.SetWithTTL("ttl-key1", IntValue(100), 10*time.Second); err != nil {
+		t.Fatalf("SetWithTTL ttl-key1 failed: %v", err)
+	}
+	if err := store.SetWithTTL("ttl-key2", IntValue(200), 20*time.Second); err != nil {
+		t.Fatalf("SetWithTTL ttl-key2 failed: %v", err)
+	}
+	if err := store.Set("normal-key", IntValue(300)); err != nil {
+		t.Fatalf("Set normal-key failed: %v", err)
+	}
 
 	// Save snapshot
 	filepath := "/tmp/kvs_test_ttl.snapshot"
@@ -1928,8 +2019,12 @@ func TestSaveSnapshot_DoesNotModify(t *testing.T) {
 	defer store.Close()
 
 	// Add test data
-	store.Set("key1", IntValue(100))
-	store.Set("key2", IntValue(200))
+	if err := store.Set("key1", IntValue(100)); err != nil {
+		t.Fatalf("Set key1 failed: %v", err)
+	}
+	if err := store.Set("key2", IntValue(200)); err != nil {
+		t.Fatalf("Set key2 failed: %v", err)
+	}
 
 	initialLen := store.Len()
 
@@ -1961,7 +2056,9 @@ func TestSaveSnapshot_ClosedStore(t *testing.T) {
 		t.Fatalf("NewKeyValueStore returned an error: %v", err)
 	}
 
-	store.Set("key1", IntValue(100))
+	if err := store.Set("key1", IntValue(100)); err != nil {
+		t.Fatalf("Set key1 failed: %v", err)
+	}
 	store.Close()
 
 	filepath := "/tmp/kvs_test_closed.snapshot"
@@ -1984,7 +2081,9 @@ func TestLoadSnapshot_ValidSnapshot(t *testing.T) {
 
 	for i := 0; i < 50; i++ {
 		key := fmt.Sprintf("key%d", i)
-		store1.Set(key, IntValue(i))
+		if err := store1.Set(key, IntValue(i)); err != nil {
+			t.Fatalf("Set %s failed: %v", key, err)
+		}
 	}
 
 	filepath := "/tmp/kvs_test_load_valid.snapshot"
@@ -2035,8 +2134,12 @@ func TestLoadSnapshot_WithTTL(t *testing.T) {
 	}
 
 	// Add keys with long TTL so they don't expire during test
-	store1.SetWithTTL("ttl-key", IntValue(100), 1*time.Hour)
-	store1.Set("normal-key", IntValue(200))
+	if err := store1.SetWithTTL("ttl-key", IntValue(100), 1*time.Hour); err != nil {
+		t.Fatalf("SetWithTTL ttl-key failed: %v", err)
+	}
+	if err := store1.Set("normal-key", IntValue(200)); err != nil {
+		t.Fatalf("Set normal-key failed: %v", err)
+	}
 
 	filepath := "/tmp/kvs_test_load_ttl.snapshot"
 	defer os.Remove(filepath)
@@ -2077,7 +2180,9 @@ func TestLoadSnapshot_ReplacesData(t *testing.T) {
 		t.Fatalf("NewKeyValueStore returned an error: %v", err)
 	}
 
-	store1.Set("saved-key", IntValue(100))
+	if err := store1.Set("saved-key", IntValue(100)); err != nil {
+		t.Fatalf("Set saved-key failed: %v", err)
+	}
 
 	filepath := "/tmp/kvs_test_load_replace.snapshot"
 	defer os.Remove(filepath)
@@ -2095,8 +2200,12 @@ func TestLoadSnapshot_ReplacesData(t *testing.T) {
 	}
 	defer store2.Close()
 
-	store2.Set("existing-key", IntValue(999))
-	store2.Set("another-key", IntValue(888))
+	if err := store2.Set("existing-key", IntValue(999)); err != nil {
+		t.Fatalf("Set existing-key failed: %v", err)
+	}
+	if err := store2.Set("another-key", IntValue(888)); err != nil {
+		t.Fatalf("Set another-key failed: %v", err)
+	}
 
 	// Load snapshot (should replace all data)
 	err = store2.LoadSnapshot(filepath)
@@ -2127,8 +2236,12 @@ func TestLoadSnapshot_SkipsExpired(t *testing.T) {
 		t.Fatalf("NewKeyValueStore returned an error: %v", err)
 	}
 
-	store1.SetWithTTL("expired-key", IntValue(100), 50*time.Millisecond)
-	store1.Set("valid-key", IntValue(200))
+	if err := store1.SetWithTTL("expired-key", IntValue(100), 50*time.Millisecond); err != nil {
+		t.Fatalf("SetWithTTL expired-key failed: %v", err)
+	}
+	if err := store1.Set("valid-key", IntValue(200)); err != nil {
+		t.Fatalf("Set valid-key failed: %v", err)
+	}
 
 	filepath := "/tmp/kvs_test_load_expired.snapshot"
 	defer os.Remove(filepath)
@@ -2185,10 +2298,14 @@ func TestLoadSnapshot_NonExistentFile(t *testing.T) {
 func TestLoadSnapshot_ClosedStore(t *testing.T) {
 	// Create a valid snapshot first
 	store1, _ := NewKeyValueStore(10)
-	store1.Set("key1", IntValue(100))
+	if err := store1.Set("key1", IntValue(100)); err != nil {
+		t.Fatalf("Set key1 failed: %v", err)
+	}
 	filepath := "/tmp/kvs_test_load_closed.snapshot"
 	defer os.Remove(filepath)
-	store1.SaveSnapshot(filepath)
+	if err := store1.SaveSnapshot(filepath); err != nil {
+		t.Fatalf("SaveSnapshot failed: %v", err)
+	}
 	store1.Close()
 
 	// Try to load into closed store
