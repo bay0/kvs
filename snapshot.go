@@ -4,6 +4,7 @@ import (
 	"encoding/gob"
 	"fmt"
 	"hash/crc32"
+	"io"
 	"os"
 	"sync/atomic"
 	"time"
@@ -107,8 +108,10 @@ func (kvs *KeyValueStore) SaveSnapshot(filepath string) error {
 	}
 
 	// Calculate CRC32 of the file content
-	file.Seek(0, 0)
-	if _, err := file.WriteTo(crc); err != nil {
+	if _, err := file.Seek(0, 0); err != nil {
+		return fmt.Errorf("failed to seek to beginning: %w", err)
+	}
+	if _, err := io.Copy(crc, file); err != nil {
 		return fmt.Errorf("failed to calculate checksum: %w", err)
 	}
 
