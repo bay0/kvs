@@ -14,4 +14,26 @@
 # Dependency directories (remove the comment below to include it)
 # vendor/
 
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
 .DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.log
+
+# Test coverage
+coverage.txt
+*.cover
+
+# Snapshot test files (for testing snapshot functionality)
+*.snapshot
+testdata/snapshots/# Exclude specs directory from go build
+specs/

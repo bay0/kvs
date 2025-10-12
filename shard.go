@@ -2,6 +2,7 @@ package kvs
 
 import (
 	"sync"
+	"time"
 )
 
 // shard represents a partition of the key-value store.
@@ -9,6 +10,7 @@ type shard struct {
 	id    int
 	mu    sync.RWMutex
 	store map[string]Value
+	ttls  map[string]time.Time // TTL metadata: key -> absolute expiration time
 }
 
 // Keys returns a slice of all the keys in the shard.

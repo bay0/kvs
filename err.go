@@ -10,13 +10,25 @@ const (
 	ErrNotFound
 	ErrDuplicate
 	ErrInvalidNumShards
+	ErrInvalidShardIndex
+	ErrCorruptedSnapshot
+	ErrUnsupportedVersion
+	ErrInvalidTTL
+	ErrStoreClosed
+	ErrNilHashFunc
 )
 
 var errMsg = map[ErrCode]string{
-	ErrUnknown:          "unknown error",
-	ErrNotFound:         "item not found",
-	ErrDuplicate:        "item already exists",
-	ErrInvalidNumShards: "invalid number of shards",
+	ErrUnknown:            "unknown error",
+	ErrNotFound:           "item not found",
+	ErrDuplicate:          "item already exists",
+	ErrInvalidNumShards:   "invalid number of shards",
+	ErrInvalidShardIndex:  "hash function returned invalid shard index",
+	ErrCorruptedSnapshot:  "snapshot file is corrupted",
+	ErrUnsupportedVersion: "snapshot version not supported",
+	ErrInvalidTTL:         "TTL duration must be non-negative",
+	ErrStoreClosed:        "store has been closed",
+	ErrNilHashFunc:        "hash function cannot be nil",
 }
 
 // Error returns the string representation of an error code.
